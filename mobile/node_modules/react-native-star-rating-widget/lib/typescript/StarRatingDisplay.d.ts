@@ -1,0 +1,62 @@
+import { StyleProp, ViewStyle } from 'react-native';
+import { StarIconProps } from './StarIcon';
+type Props = {
+    /**
+     * Rating Value. Should be between 0 and `maxStars`.
+     */
+    rating: number;
+    /**
+     * Custom color for the filled stars.
+     *
+     * @default '#fdd835'
+     */
+    color?: string;
+    /**
+     * Custom color for the empty stars.
+     *
+     * @default color
+     */
+    emptyColor?: string;
+    /**
+     * Total amount of stars to display.
+     *
+     * @default 5
+     */
+    maxStars?: number;
+    /**
+     * Size of the stars.
+     *
+     * @default 32
+     */
+    starSize?: number;
+    /**
+     * Custom style for the component.
+     */
+    style?: StyleProp<ViewStyle>;
+    /**
+     * Custom style for the star component.
+     */
+    starStyle?: StyleProp<ViewStyle>;
+    /**
+     * Custom star icon component.
+     *
+     * @default StarIcon
+     */
+    StarIconComponent?: (props: StarIconProps) => JSX.Element;
+    /**
+     * Step size for the rating.
+     *
+     * @default 'half'
+     */
+    step?: 'half' | 'quarter' | 'full';
+    /**
+     * The accessibility label used on the star component.
+     *
+     * @default `star rating. ${rating} stars.`
+     */
+    accessibilityLabel?: string;
+    testID?: string;
+};
+declare const StarRatingDisplay: ({ rating, maxStars, starSize, color, emptyColor, step, style, starStyle, StarIconComponent, testID, accessibilityLabel, }: Props) => JSX.Element;
+export default StarRatingDisplay;
+//# sourceMappingURL=StarRatingDisplay.d.ts.map
