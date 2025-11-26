@@ -36,10 +36,14 @@ export const colors = {
     surface: '#FFFFFF',
 
     // Texto
+    text: '#212121', // Alias for textPrimary
     textPrimary: '#212121',
     textSecondary: '#757575',
     textDisabled: '#9E9E9E',
     textOnPrimary: '#FFFFFF',
+
+    // Borders
+    border: '#E0E0E0',
 
     // Categorías (colores distintivos)
     barber: '#FF6B6B',
@@ -66,6 +70,7 @@ export const borderRadius = {
     lg: 12,
     xl: 16,
     round: 999,
+    full: 999, // Alias for round
 };
 
 export const typography = {
@@ -99,6 +104,11 @@ export const typography = {
         fontWeight: '600' as const,
         lineHeight: 22,
     },
+    body: { // Alias for body1
+        fontSize: 16,
+        fontWeight: 'normal' as const,
+        lineHeight: 24,
+    },
     body1: {
         fontSize: 16,
         fontWeight: 'normal' as const,
@@ -118,11 +128,41 @@ export const typography = {
         fontSize: 14,
         fontWeight: '600' as const,
         lineHeight: 20,
-        textTransform: 'uppercase' as const,
+        letterSpacing: 0.5,
     },
 };
 
 export const shadows = {
+    sm: { // Alias for small
+        shadowColor: colors.black,
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 2,
+    },
+    md: { // Medium shadow
+        shadowColor: colors.black,
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.15,
+        shadowRadius: 6,
+        elevation: 4,
+    },
+    lg: { // Large shadow
+        shadowColor: colors.black,
+        shadowOffset: {
+            width: 0,
+            height: 6,
+        },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 8,
+    },
     small: {
         shadowColor: colors.black,
         shadowOffset: {
