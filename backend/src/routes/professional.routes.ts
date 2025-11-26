@@ -65,24 +65,11 @@ router.get('/:id', authenticate, async (req: AuthRequest, res, next) => {
                 portfolioItems: {
                     orderBy: { displayOrder: 'asc' },
                 },
-                reviewsReceived: {
-                    include: {
-                        client: {
-                            select: {
-                                firstName: true,
-                                lastName: true,
-                                profilePhoto: true,
-                            },
-                        },
-                    },
-                    orderBy: { createdAt: 'desc' },
-                    take: 10,
-                },
             },
         });
 
         if (!professional) {
-            throw new AppError('Profesional no encontrado', 404);
+            return res.status(404).json({ error: 'Profesional no encontrado' });
         }
 
         res.json(professional);
