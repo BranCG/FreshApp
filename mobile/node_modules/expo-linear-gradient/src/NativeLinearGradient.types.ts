@@ -3,19 +3,20 @@ import { ViewProps } from 'react-native';
 
 export type NativeLinearGradientProps = ViewProps &
   PropsWithChildren<{
-    colors: number[];
-    locations?: number[] | null;
+    colors: readonly number[];
+    locations?: readonly number[] | null;
     startPoint?: NativeLinearGradientPoint | null;
     endPoint?: NativeLinearGradientPoint | null;
+    dither?: boolean;
   }>;
 
 export type getLinearGradientBackgroundImage = (
-  colors: number[],
+  colors: readonly number[],
   width?: number,
   height?: number,
-  locations?: number[] | null,
+  locations?: readonly number[] | null,
   startPoint?: NativeLinearGradientPoint | null,
   endPoint?: NativeLinearGradientPoint | null
 ) => string;
 
-export type NativeLinearGradientPoint = [number, number];
+export type NativeLinearGradientPoint = [x: number, y: number];

@@ -47,10 +47,16 @@ RCT_EXPORT_MODULE()
 {
   [GMSServices setMetalRendererEnabled:YES];
   NSString* googleMapId  = nil;
-  if (self.initialProps && self.initialProps[@"googleMapId"]){
-    googleMapId  = self.initialProps[@"googleMapId"];
+  BOOL zoomTapEnabled = YES;
+  if (self.initialProps){
+      if (self.initialProps[@"googleMapId"]){
+          googleMapId  = self.initialProps[@"googleMapId"];
+      }
+      if (self.initialProps[@"zoomTapEnabled"]){
+          zoomTapEnabled = self.initialProps[@"zoomTapEnabled"];
+      }
   }
-  AIRGoogleMap *map = [[AIRGoogleMap alloc] initWithMapId:googleMapId];
+  AIRGoogleMap *map = [[AIRGoogleMap alloc] initWithMapId:googleMapId andZoomTapEnabled:zoomTapEnabled];
   map.bridge = self.bridge;
   map.delegate = self;
   map.isAccessibilityElement = NO;
@@ -101,6 +107,8 @@ RCT_EXPORT_VIEW_PROPERTY(onPanDrag, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onUserLocationChange, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onChange, RCTBubblingEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onMarkerPress, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMarkerSelect, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onMarkerDeselect, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onRegionChange, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onRegionChangeComplete, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onPoiClick, RCTDirectEventBlock)
