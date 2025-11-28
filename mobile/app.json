@@ -1,53 +1,61 @@
 {
-    "expo": {
-        "name": "FreshApp",
-        "slug": "freshapp",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#6200EE"
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "com.freshapp",
-            "infoPlist": {
-                "NSLocationWhenInUseUsageDescription": "FreshApp necesita tu ubicación para mostrarte profesionales cercanos",
-                "NSCameraUsageDescription": "FreshApp necesita acceso a la cámara para subir fotos",
-                "NSPhotoLibraryUsageDescription": "FreshApp necesita acceso a tus fotos para subir imágenes"
-            }
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#6200EE"
-            },
-            "package": "com.freshapp",
-            "permissions": [
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_COARSE_LOCATION",
-                "CAMERA",
-                "READ_EXTERNAL_STORAGE",
-                "WRITE_EXTERNAL_STORAGE"
-            ],
-            "config": {
-                "googleMaps": {
-                    "apiKey": "TU_GOOGLE_MAPS_API_KEY"
-                }
-            }
-        },
-        "web": {
-            "favicon": "./assets/favicon.png"
-        },
-        "plugins": [
-            "expo-location",
-            "expo-notifications"
-        ]
+  "expo": {
+    "name": "FreshApp",
+    "slug": "freshapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6200EE"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.freshapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "FreshApp necesita tu ubicación para mostrarte profesionales cercanos",
+        "NSCameraUsageDescription": "FreshApp necesita acceso a la cámara para subir fotos",
+        "NSPhotoLibraryUsageDescription": "FreshApp necesita acceso a tus fotos para subir imágenes"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6200EE"
+      },
+      "package": "com.freshapp",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyAdjscNWb-k04av6fLuMC81uGcVWWsM5sw"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-notifications",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "220946fa-56c3-4140-8d9e-bdc0c06965dd"
+      }
     }
+  }
 }

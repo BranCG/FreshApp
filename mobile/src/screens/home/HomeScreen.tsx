@@ -32,6 +32,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const [professionals, setProfessionals] = useState<any[]>([]);
     const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
 
+    const categories = [
+        { id: 'BARBER', name: 'Barbería', icon: 'cut' },
+        { id: 'TATTOO_ARTIST', name: 'Tatuajes', icon: 'palette' },
+        { id: 'MANICURIST', name: 'Manicura', icon: 'hand' },
+    ];
+
     const DEFAULT_REGION: Region = {
         latitude: -33.4489, // Santiago, Chile
         longitude: -70.6693,
@@ -236,6 +242,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 {/* Category Filter */}
                 <View style={styles.filterContainer}>
                     <CategoryFilter
+                        categories={categories}
                         selectedCategory={selectedCategory}
                         onSelectCategory={setSelectedCategory}
                     />
