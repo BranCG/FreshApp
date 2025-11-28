@@ -46,7 +46,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     };
 
     useEffect(() => {
-        getLocationPermission();
+        // TEMPORAL: Usar ubicación mock sin permisos GPS
+        // getLocationPermission();
+
+        const mockLocation = {
+            coords: {
+                latitude: -33.4489,
+                longitude: -70.6693,
+                altitude: null,
+                accuracy: null,
+                altitudeAccuracy: null,
+                heading: null,
+                speed: null,
+            },
+            timestamp: Date.now(),
+        } as Location.LocationObject;
+
+        setLocation(mockLocation);
+        setLoading(false);
     }, []);
 
     useEffect(() => {
@@ -111,33 +128,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         const mockData = [
             {
                 id: '1',
-                user: { firstName: 'Carlos', lastName: 'Rojas', profilePhoto: null },
-                category: 'BARBER',
-                avgRating: 4.8,
-                totalReviews: 156,
-                prices: { haircut: 12000, beard: 8000 },
+                name: 'Carlos Rojas',
+                category: 'Barbería',
+                rating: 4.8,
+                reviews: 156,
+                price: 12000,
+                image: 'https://i.pravatar.cc/150?img=12',
                 isAvailable: true,
                 latitude: userLocation.coords.latitude + 0.01,
                 longitude: userLocation.coords.longitude + 0.01,
             },
             {
                 id: '2',
-                user: { firstName: 'María', lastName: 'González', profilePhoto: null },
-                category: 'MANICURIST',
-                avgRating: 4.9,
-                totalReviews: 203,
-                prices: { manicure: 15000, pedicure: 18000 },
+                name: 'María González',
+                category: 'Manicura',
+                rating: 4.9,
+                reviews: 203,
+                price: 15000,
+                image: 'https://i.pravatar.cc/150?img=5',
                 isAvailable: true,
                 latitude: userLocation.coords.latitude - 0.015,
                 longitude: userLocation.coords.longitude + 0.008,
             },
             {
                 id: '3',
-                user: { firstName: 'Diego', lastName: 'Silva', profilePhoto: null },
-                category: 'TATTOO_ARTIST',
-                avgRating: 4.7,
-                totalReviews: 89,
-                prices: { small: 30000, medium: 60000 },
+                name: 'Diego Silva',
+                category: 'Tatuajes',
+                rating: 4.7,
+                reviews: 89,
+                price: 30000,
+                image: 'https://i.pravatar.cc/150?img=33',
                 isAvailable: false,
                 latitude: userLocation.coords.latitude + 0.02,
                 longitude: userLocation.coords.longitude - 0.01,
@@ -145,7 +165,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         ];
 
         return selectedCategory
-            ? mockData.filter(p => p.category === selectedCategory)
+            ? mockData.filter(p => {
+                const categoryMap: { [key: string]: string } = {
+                    'BARBER': 'Barbería',
+                    'MANICURIST': 'Manicura',
+                    'TATTOO_ARTIST': 'Tatuajes',
+                };
+                return p.category === categoryMap[selectedCategory];
+            })
             : mockData;
     };
 
@@ -177,7 +204,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const handleProfessionalPress = (professional: any) => {
         // Navigate to professional detail
         // navigation.navigate('ProfessionalDetail', { professionalId: professional.id });
-        Alert.alert('Ver Perfil', `Navegar al perfil de ${professional.user.firstName}`);
+        Alert.alert('Ver Perfil', `Navegar al perfil de ${professional.name}`);
     };
 
     if (loading) {

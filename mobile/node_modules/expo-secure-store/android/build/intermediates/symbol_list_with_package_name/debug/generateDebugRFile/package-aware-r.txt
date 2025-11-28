@@ -1,0 +1,3 @@
+expo.modules.securestore
+xml secure_store_backup_rules
+xml secure_store_data_extraction_rules
