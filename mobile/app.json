@@ -34,9 +34,7 @@
         "ACCESS_COARSE_LOCATION",
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "config": {
         "googleMaps": {
@@ -50,7 +48,14 @@
     "plugins": [
       "expo-location",
       "expo-notifications",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-dev-client",
+      [
+        "react-native-maps",
+        {
+          "apiKey": "AIzaSyAdjscNWb-k04av6fLuMC81uGcVWWsM5sw"
+        }
+      ]
     ],
     "extra": {
       "eas": {
