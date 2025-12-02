@@ -1,6 +1,5 @@
 import multer from 'multer';
 import path from 'path';
-import { Request } from 'express';
 import AWS from 'aws-sdk';
 import { AppError } from '../middleware/error-handler.middleware';
 
@@ -16,8 +15,8 @@ const storage = multer.memoryStorage();
 
 // Filtro de archivos
 const fileFilter = (
-    req: Request,
-    file: Express.Multer.File,
+    req: any,
+    file: any,
     cb: multer.FileFilterCallback
 ) => {
     // Validar tipo de archivo
@@ -45,7 +44,7 @@ export const upload = multer({
 
 // Upload a S3
 export const uploadToS3 = async (
-    file: Express.Multer.File,
+    file: any,
     folder: string = 'uploads'
 ): Promise<string> => {
     const fileName = `${folder}/${Date.now()}-${file.originalname}`;
