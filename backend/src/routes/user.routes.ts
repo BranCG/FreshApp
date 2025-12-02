@@ -77,8 +77,8 @@ router.put(
     }
 );
 
-// Subir foto de perfil
-router.post(
+// Subir/Actualizar foto de perfil
+router.put(
     '/me/photo',
     authenticate,
     upload.single('photo'),

@@ -104,7 +104,7 @@ export const userAPI = {
     }) => api.put('/users/me', data),
 
     uploadPhoto: (formData: FormData) =>
-        api.post('/users/me/photo', formData, {
+        api.put('/users/me/photo', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         }),
 };

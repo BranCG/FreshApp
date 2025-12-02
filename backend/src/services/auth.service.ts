@@ -54,16 +54,8 @@ export class AuthService {
                 lastName: data.lastName,
                 role: data.role,
             },
-            select: {
-                id: true,
-                email: true,
-                phone: true,
-                firstName: true,
-                lastName: true,
-                role: true,
-                profilePhoto: true,
-                isVerified: true,
-                createdAt: true,
+            include: {
+                professional: true,
             },
         });
 
@@ -74,8 +66,17 @@ export class AuthService {
         // En producción: enviar OTP por Twilio o similar
         // await this.sendOTP(user.phone || user.email, otpCode);
 
+        // Remover datos sensibles
+        const { passwordHash, ...userWithoutPassword } = user;
+
+        // Determinar si el perfil está completo (solo para profesionales)
+        const profileComplete = data.role === 'PROFESSIONAL'
+            ? false  // Siempre false en registro inicial
+            : true;   // Para clientes, el perfil está completo desde el inicio
+
         return {
-            user,
+            user: userWithoutPassword,
+            profileComplete,
             otpCode, // Solo para desarrollo, NO enviar en producción
             message: 'Usuario registrado. Verifica tu código OTP.',
         };
@@ -86,7 +87,13 @@ export class AuthService {
         const user = await prisma.user.findUnique({
             where: { email: data.email },
             include: {
-                professional: true,
+                professional: {
+                    include: {
+                        portfolioItems: {
+                            orderBy: { displayOrder: 'asc' },
+                        },
+                    },
+                },
             },
         });
 
@@ -112,8 +119,17 @@ export class AuthService {
         // Remover datos sensibles
         const { passwordHash, ...userWithoutPassword } = user;
 
+        // Determinar si el perfil está completo
+        const profileComplete = user.role === 'PROFESSIONAL'
+            ? Boolean(user.professional &&
+                user.professional.bio &&
+                user.professional.address &&
+                user.professional.prices)
+            : true;
+
         return {
             user: userWithoutPassword,
+            profileComplete,
             accessToken,
             refreshToken,
         };
@@ -130,21 +146,23 @@ export class AuthService {
         const user = await prisma.user.update({
             where: { id: userId },
             data: { isVerified: true },
-            select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-                role: true,
-                isVerified: true,
+            include: {
+                professional: true,
             },
         });
 
         const accessToken = this.generateAccessToken(user.id, user.role);
         const refreshToken = this.generateRefreshToken(user.id, user.role);
 
+        // Remover datos sensibles
+        const { passwordHash, ...userWithoutPassword } = user;
+
+        // Determinar si el perfil está completo
+        const profileComplete = user.role === 'PROFESSIONAL' ? false : true;
+
         return {
-            user,
+            user: userWithoutPassword,
+            profileComplete,
             accessToken,
             refreshToken,
         };
