@@ -265,7 +265,7 @@ router.post(
     ]),
     async (req: AuthRequest, res, next) => {
         try {
-            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+            const files = req.files as any as { [fieldname: string]: Express.Multer.File[] };
 
             if (!files.idDocument || !files.backgroundCheck) {
                 throw new AppError('Se requieren ambos documentos', 400);
