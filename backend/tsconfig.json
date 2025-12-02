@@ -19,11 +19,7 @@
         "noUnusedLocals": false,
         "noUnusedParameters": false,
         "noImplicitReturns": false,
-        "noFallthroughCasesInSwitch": true,
-        "typeRoots": [
-            "./node_modules/@types",
-            "./src/types"
-        ]
+        "noFallthroughCasesInSwitch": true
     },
     "include": [
         "src/**/*"
