@@ -1,0 +1,51 @@
+services:
+  # Backend API Service
+  - type: web
+    name: freshapp-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: freshapp-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: FRONTEND_URL
+        value: "*"
+      - key: SOCKET_CORS_ORIGIN
+        value: "*"
+      - key: PLATFORM_COMMISSION_PERCENTAGE
+        value: "10"
+      # Add these manually in Render dashboard:
+      # - MERCADOPAGO_ACCESS_TOKEN
+      # - MERCADOPAGO_PUBLIC_KEY
+      # - AWS_ACCESS_KEY_ID
+      # - AWS_SECRET_ACCESS_KEY
+      # - AWS_REGION
+      # - AWS_S3_BUCKET
+      # - GOOGLE_MAPS_API_KEY
+      # - FCM_SERVER_KEY
+      # - TWILIO_ACCOUNT_SID (optional)
+      # - TWILIO_AUTH_TOKEN (optional)
+      # - TWILIO_PHONE_NUMBER (optional)
+
+databases:
+  # PostgreSQL Database
+  - name: freshapp-db
+    plan: free
+    databaseName: freshapp
+    user: freshapp
+    region: oregon
