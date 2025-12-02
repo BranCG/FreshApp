@@ -49,13 +49,7 @@
       "expo-location",
       "expo-notifications",
       "expo-secure-store",
-      "expo-dev-client",
-      [
-        "react-native-maps",
-        {
-          "apiKey": "AIzaSyAdjscNWb-k04av6fLuMC81uGcVWWsM5sw"
-        }
-      ]
+      "expo-dev-client"
     ],
     "extra": {
       "eas": {
