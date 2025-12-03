@@ -7,24 +7,26 @@ import { RootState } from '../store';
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
+import OTPVerificationScreen from '../screens/auth/OTPVerificationScreen';
 import { HomeScreen } from '../screens/home/HomeScreen';
 
 const Stack = createNativeStackNavigator();
 
 export const AppNavigator = () => {
-    // Temporary: Force authenticated for testing
-    const isAuthenticated = true;
-    // const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
     return (
         <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }}>
                 {isAuthenticated ? (
-                    <Stack.Screen name="Home" component={HomeScreen} />
+                    <>
+                        <Stack.Screen name="Main" component={HomeScreen} />
+                    </>
                 ) : (
                     <>
                         <Stack.Screen name="Login" component={LoginScreen} />
                         <Stack.Screen name="Register" component={RegisterScreen} />
+                        <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
                     </>
                 )}
             </Stack.Navigator>
