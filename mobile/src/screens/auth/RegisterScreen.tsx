@@ -3,18 +3,22 @@ import {
     View,
     Text,
     StyleSheet,
-    SafeAreaView,
     KeyboardAvoidingView,
     Platform,
     ScrollView,
     TouchableOpacity,
     Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { useDispatch } from 'react-redux';
+
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { theme } from '../../theme/theme';
 import { authAPI } from '../../services/api';
-import { useDispatch } from 'react-redux';
 import { authStart, registerSuccess, authFailure } from '../../store/authSlice';
 
 interface RegisterScreenProps {
@@ -23,66 +27,45 @@ interface RegisterScreenProps {
 
 type UserRole = 'CLIENT' | 'PROFESSIONAL';
 
+const schema = yup.object({
+    firstName: yup.string().required('El nombre es requerido'),
+    lastName: yup.string().required('El apellido es requerido'),
+    email: yup.string().email('Email inválido').required('El email es requerido'),
+    phone: yup.string().optional(),
+    password: yup.string().min(8, 'La contraseña debe tener al menos 8 caracteres').required('La contraseña es requerida'),
+    confirmPassword: yup.string()
+        .oneOf([yup.ref('password')], 'Las contraseñas no coinciden')
+        .required('Confirmar contraseña es requerido'),
+}).required();
+
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     const dispatch = useDispatch();
     const [step, setStep] = useState<'role' | 'form'>('role');
     const [role, setRole] = useState<UserRole>('CLIENT');
+    const [loading, setLoading] = useState(false);
 
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: '',
+    const { control, handleSubmit, formState: { errors } } = useForm({
+        resolver: yupResolver(schema),
+        defaultValues: {
+            firstName: '',
+            lastName: '',
+            email: '',
+            phone: '',
+            password: '',
+            confirmPassword: '',
+        },
     });
 
-    const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    const validateForm = () => {
-        const newErrors: Record<string, string> = {};
-
-        if (!formData.firstName.trim()) {
-            newErrors.firstName = 'El nombre es requerido';
-        }
-
-        if (!formData.lastName.trim()) {
-            newErrors.lastName = 'El apellido es requerido';
-        }
-
-        if (!formData.email.trim()) {
-            newErrors.email = 'El email es requerido';
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email inválido';
-        }
-
-        if (!formData.password) {
-            newErrors.password = 'La contraseña es requerida';
-        } else if (formData.password.length < 6) {
-            newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
-        }
-
-        if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Las contraseñas no coinciden';
-        }
-
-        setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
-    };
-
-    const handleRegister = async () => {
-        if (!validateForm()) return;
-
+    const onSubmit = async (data: any) => {
         dispatch(authStart());
         setLoading(true);
         try {
             const response = await authAPI.register({
-                email: formData.email,
-                password: formData.password,
-                firstName: formData.firstName,
-                lastName: formData.lastName,
-                phone: formData.phone || undefined,
+                email: data.email,
+                password: data.password,
+                firstName: data.firstName,
+                lastName: data.lastName,
+                phone: data.phone || undefined,
                 role,
             });
 
@@ -98,20 +81,16 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
                 otpCode, // Solo en desarrollo
             });
         } catch (error: any) {
-            const errorMessage = error.response?.data?.message || 'Error al registrarse';
+            console.error('Registration Error:', error);
+            if (error.response) {
+                console.error('Error Data:', error.response.data);
+                console.error('Error Status:', error.response.status);
+            }
+            const errorMessage = error.response?.data?.message || error.message || 'Error al registrarse';
             dispatch(authFailure(errorMessage));
             Alert.alert('Error', errorMessage);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const updateField = (field: keyof typeof formData, value: string) => {
-        setFormData({ ...formData, [field]: value });
-        if (errors[field]) {
-            const newErrors = { ...errors };
-            delete newErrors[field];
-            setErrors(newErrors);
         }
     };
 
@@ -154,10 +133,11 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
                     </TouchableOpacity>
 
                     <Button
-                        title="Continuar"
                         onPress={() => setStep('form')}
                         style={styles.continueButton}
-                    />
+                    >
+                        Continuar
+                    </Button>
 
                     <View style={styles.loginContainer}>
                         <Text style={styles.loginText}>¿Ya tienes cuenta? </Text>
@@ -194,28 +174,28 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
 
                     <Input
                         label="Nombre"
+                        name="firstName"
+                        control={control}
                         placeholder="Juan"
-                        value={formData.firstName}
-                        onChangeText={(text) => updateField('firstName', text)}
-                        error={errors.firstName}
+                        error={errors.firstName?.message}
                         autoCapitalize="words"
                     />
 
                     <Input
                         label="Apellido"
+                        name="lastName"
+                        control={control}
                         placeholder="Pérez"
-                        value={formData.lastName}
-                        onChangeText={(text) => updateField('lastName', text)}
-                        error={errors.lastName}
+                        error={errors.lastName?.message}
                         autoCapitalize="words"
                     />
 
                     <Input
                         label="Email"
+                        name="email"
+                        control={control}
                         placeholder="tu@email.com"
-                        value={formData.email}
-                        onChangeText={(text) => updateField('email', text)}
-                        error={errors.email}
+                        error={errors.email?.message}
                         keyboardType="email-address"
                         autoCapitalize="none"
                         autoCorrect={false}
@@ -223,37 +203,38 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
 
                     <Input
                         label="Teléfono (opcional)"
+                        name="phone"
+                        control={control}
                         placeholder="+56 9 1234 5678"
-                        value={formData.phone}
-                        onChangeText={(text) => updateField('phone', text)}
-                        error={errors.phone}
+                        error={errors.phone?.message}
                         keyboardType="phone-pad"
                     />
 
                     <Input
                         label="Contraseña"
+                        name="password"
+                        control={control}
                         placeholder="••••••••"
-                        value={formData.password}
-                        onChangeText={(text) => updateField('password', text)}
-                        error={errors.password}
+                        error={errors.password?.message}
                         secureTextEntry
                     />
 
                     <Input
                         label="Confirmar Contraseña"
+                        name="confirmPassword"
+                        control={control}
                         placeholder="••••••••"
-                        value={formData.confirmPassword}
-                        onChangeText={(text) => updateField('confirmPassword', text)}
-                        error={errors.confirmPassword}
+                        error={errors.confirmPassword?.message}
                         secureTextEntry
                     />
 
                     <Button
-                        title="Registrarse"
-                        onPress={handleRegister}
+                        onPress={handleSubmit(onSubmit)}
                         loading={loading}
                         style={styles.registerButton}
-                    />
+                    >
+                        Registrarse
+                    </Button>
 
                     <Text style={styles.termsText}>
                         Al registrarte, aceptas nuestros{' '}

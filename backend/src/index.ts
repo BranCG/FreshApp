@@ -53,7 +53,7 @@ app.set('io', io);
 // Middleware de seguridad y utilidades
 app.use(helmet());
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:19006',
+    origin: '*', // Allow all origins for debugging
     credentials: true,
 }));
 app.use(compression());
@@ -99,7 +99,7 @@ app.use(errorHandler);
 initializeSocketHandlers(io);
 
 // Puerto
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 // Iniciar servidor
 async function startServer() {
@@ -109,7 +109,7 @@ async function startServer() {
         console.log('✅ Conectado a PostgreSQL');
 
         // Iniciar servidor HTTP
-        httpServer.listen(PORT, () => {
+        httpServer.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
             console.log(`📍 API URL: http://localhost:${PORT}/api`);
             console.log(`🌍 Entorno: ${process.env.NODE_ENV}`);

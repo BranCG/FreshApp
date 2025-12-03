@@ -18,7 +18,8 @@ El archivo `.env` está protegido por gitignore. Debes crearlo manualmente:
 cd backend
 
 @"
-DATABASE_URL=postgresql://postgres:password@localhost:5432/freshapp?schema=public
+DATABASE_URL=postgresql://postgres:passw
+ord@localhost:5432/freshapp?schema=public
 JWT_SECRET=3eb6f2396410f401daf84cb697a8be643c2f0d3d82cf598376d4d82468b24fc6151db1ab7f4548d7780259f97588d93038759762d05587e44528da210e7058f4
 JWT_REFRESH_SECRET=57e6c2a4f6c2406ef1db19bedec66ea92fff2609602054d87c25d4c8601ec4716beff3e59e65e091bdfe0090783d1bed44485c8a94e04c75c0da395ae8451150
 JWT_EXPIRES_IN=15m

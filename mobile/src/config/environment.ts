@@ -8,8 +8,8 @@ import { Platform } from 'react-native';
 
 const ENV = {
   dev: {
-    apiUrl: 'https://freshapp-backend.onrender.com/api',
-    socketUrl: 'https://freshapp-backend.onrender.com',
+    apiUrl: 'http://192.168.100.3:5000/api',
+    socketUrl: 'http://192.168.100.3:5000',
   },
   staging: {
     apiUrl: 'https://freshapp-backend.onrender.com/api',
