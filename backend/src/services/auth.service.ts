@@ -67,7 +67,7 @@ export class AuthService {
         // await this.sendOTP(user.phone || user.email, otpCode);
 
         // Remover datos sensibles
-        const { passwordHash, ...userWithoutPassword } = user;
+        const { passwordHash: _, ...userWithoutPassword } = user;
 
         // Determinar si el perfil está completo (solo para profesionales)
         const profileComplete = data.role === 'PROFESSIONAL'
