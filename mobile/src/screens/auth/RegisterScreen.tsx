@@ -13,7 +13,9 @@ import {
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { theme } from '../../theme/theme';
-import { api } from '../../services/api';
+import { authAPI } from '../../services/api';
+import { useDispatch } from 'react-redux';
+import { authStart, registerSuccess, authFailure } from '../../store/authSlice';
 
 interface RegisterScreenProps {
     navigation: any;
@@ -22,6 +24,7 @@ interface RegisterScreenProps {
 type UserRole = 'CLIENT' | 'PROFESSIONAL';
 
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
+    const dispatch = useDispatch();
     const [step, setStep] = useState<'role' | 'form'>('role');
     const [role, setRole] = useState<UserRole>('CLIENT');
 
@@ -71,9 +74,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
     const handleRegister = async () => {
         if (!validateForm()) return;
 
+        dispatch(authStart());
         setLoading(true);
         try {
-            const response = await api.auth.register({
+            const response = await authAPI.register({
                 email: formData.email,
                 password: formData.password,
                 firstName: formData.firstName,
@@ -82,25 +86,21 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
                 role,
             });
 
-            Alert.alert(
-                'Registro Exitoso',
-                'Te enviamos un código de verificación. Por favor verifica tu cuenta.',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            // Navigate to OTP verification
-                            // navigation.navigate('OTPVerification', { userId: response.user.id });
-                            navigation.navigate('Login');
-                        },
-                    },
-                ]
-            );
+            const { user, profileComplete, otpCode } = response.data;
+
+            // Guardar user en Redux
+            dispatch(registerSuccess({ user, profileComplete }));
+
+            // Navegar a OTP verification
+            navigation.navigate('OTPVerification', {
+                userId: user.id,
+                email: user.email,
+                otpCode, // Solo en desarrollo
+            });
         } catch (error: any) {
-            Alert.alert(
-                'Error',
-                error.response?.data?.error || 'Error al registrarse'
-            );
+            const errorMessage = error.response?.data?.message || 'Error al registrarse';
+            dispatch(authFailure(errorMessage));
+            Alert.alert('Error', errorMessage);
         } finally {
             setLoading(false);
         }

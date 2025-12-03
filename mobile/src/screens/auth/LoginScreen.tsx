@@ -6,12 +6,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import * as SecureStore from 'expo-secure-store';
 
 import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
-import { loginStart, loginSuccess, loginFailure } from '../../store/authSlice';
+import { authStart, loginSuccess, authFailure } from '../../store/authSlice';
 import { RootState } from '../../store';
 import { theme } from '../../theme/theme';
+import { authAPI } from '../../services/api';
 
 const schema = yup.object({
     email: yup.string().email('Email inválido').required('Email es requerido'),
@@ -33,14 +35,33 @@ const LoginScreen = () => {
     });
 
     const onSubmit = async (data: any) => {
-        dispatch(loginStart());
+        dispatch(authStart());
         try {
-            // Mock login
-            setTimeout(() => {
-                dispatch(loginSuccess('mock-token-123'));
-            }, 1500);
-        } catch (err) {
-            dispatch(loginFailure('Error al iniciar sesión'));
+            const response = await authAPI.login(data.email, data.password);
+            const { user, professional, accessToken, refreshToken, profileComplete } = response.data;
+
+            // Guardar tokens en SecureStore
+            await SecureStore.setItemAsync('accessToken', accessToken);
+            await SecureStore.setItemAsync('refreshToken', refreshToken);
+
+            // Actualizar Redux
+            dispatch(loginSuccess({
+                user,
+                professional,
+                token: accessToken,
+                refreshToken,
+                profileComplete,
+            }));
+
+            // Navegar según rol y estado del perfil
+            if (user.role === 'PROFESSIONAL' && !profileComplete) {
+                navigation.replace('CompleteProfile');
+            } else {
+                navigation.replace('Main');
+            }
+        } catch (err: any) {
+            const errorMessage = err.response?.data?.message || 'Error al iniciar sesión';
+            dispatch(authFailure(errorMessage));
         }
     };
 
