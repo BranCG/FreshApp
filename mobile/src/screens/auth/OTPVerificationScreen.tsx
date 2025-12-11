@@ -63,12 +63,8 @@ export const OTPVerificationScreen: React.FC<OTPVerificationScreenProps> = ({
                 profileComplete,
             }));
 
-            // Navegar según rol y estado del perfil
-            if (user.role === 'PROFESSIONAL' && !profileComplete) {
-                navigation.replace('CompleteProfile');
-            } else {
-                navigation.replace('Main');
-            }
+            // El AppNavigator manejará automáticamente la navegación
+            // basándose en el estado de isAuthenticated y profileComplete
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Código inválido';
             dispatch(authFailure(errorMessage));

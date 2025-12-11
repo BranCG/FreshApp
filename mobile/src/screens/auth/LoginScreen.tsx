@@ -53,12 +53,8 @@ const LoginScreen = () => {
                 profileComplete,
             }));
 
-            // Navegar según rol y estado del perfil
-            if (user.role === 'PROFESSIONAL' && !profileComplete) {
-                navigation.replace('CompleteProfile');
-            } else {
-                navigation.replace('Main');
-            }
+            // El AppNavigator manejará automáticamente la navegación
+            // basándose en el estado de isAuthenticated y profileComplete
         } catch (err: any) {
             const errorMessage = err.response?.data?.message || 'Error al iniciar sesión';
             dispatch(authFailure(errorMessage));

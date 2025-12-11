@@ -214,11 +214,16 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
                 await professionalAPI.addPortfolioItem(formData);
             }
 
+            // Marcar perfil como completo y actualizar Redux
+            dispatch(updateProfessionalProfile({ ...profRes.data, profileComplete: true }));
+
             Alert.alert(
                 '¡Perfil Completado!',
-                'Tu perfil profesional ha sido creado exitosamente.',
-                [{ text: 'OK', onPress: () => navigation.replace('Main') }]
+                'Tu perfil profesional ha sido creado exitosamente.'
             );
+
+            // El AppNavigator manejará automáticamente la navegación a Main
+            // basándose en profileComplete = true
 
         } catch (error: any) {
             console.error(error);
