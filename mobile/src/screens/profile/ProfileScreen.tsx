@@ -137,6 +137,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                             {user?.createdAt ? new Date(user.createdAt).toLocaleDateString('es-ES') : '-'}
                         </Text>
                     </View>
+
+                    <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Dirección:</Text>
+                        <Text style={styles.infoValue}>
+                            {user?.address || 'No registrada'}
+                        </Text>
+                    </View>
                 </View>
 
                 {/* Información profesional (solo si es profesional) */}

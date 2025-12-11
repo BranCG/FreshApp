@@ -9,6 +9,9 @@ interface User {
     profilePhoto?: string;
     role: string;
     isVerified: boolean;
+    address?: string; // Dirección para clientes
+    latitude?: number;
+    longitude?: number;
     createdAt: string;
 }
 

@@ -80,6 +80,11 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  // Ubicación del usuario (Cliente)
+  address       String?
+  latitude      Float?
+  longitude     Float?
+
   // Relaciones
   professional      Professional?
   clientRequests    ServiceRequest[] @relation("ClientRequests")

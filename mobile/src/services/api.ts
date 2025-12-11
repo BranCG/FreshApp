@@ -101,6 +101,9 @@ export const userAPI = {
         firstName?: string;
         lastName?: string;
         phone?: string;
+        address?: string;
+        latitude?: number;
+        longitude?: number;
     }) => api.put('/users/me', data),
 
     uploadPhoto: (formData: FormData) =>
@@ -135,6 +138,15 @@ export const professionalAPI = {
 
     updateProfile: (data: any) => api.put('/professionals/me', data),
 
+    findNearby: (params: {
+        latitude: number;
+        longitude: number;
+        radius?: number;
+        category?: string;
+        minRating?: number;
+        maxPrice?: number;
+    }) => api.get('/professionals/nearby', { params }),
+
     toggleAvailability: (isAvailable: boolean) =>
         api.patch('/professionals/me/availability', { isAvailable }),
 
@@ -166,7 +178,7 @@ export const serviceRequestAPI = {
         description?: string;
     }) => api.post('/service-requests', data),
 
-    getAll: (params?: { status?: string; page?: number; limit?: number }) =>
+    getAll: (params?: { status?: string; page?: number; limit?: number; role?: 'CLIENT' | 'PROFESSIONAL' }) =>
         api.get('/service-requests', { params }),
 
     getById: (id: string) => api.get(`/service-requests/${id}`),

@@ -21,6 +21,9 @@ router.get('/me', authenticate, async (req: AuthRequest, res, next) => {
                 profilePhoto: true,
                 role: true,
                 isVerified: true,
+                address: true,
+                latitude: true,
+                longitude: true,
                 createdAt: true,
                 professional: {
                     include: {
@@ -47,10 +50,13 @@ router.put(
         body('firstName').optional().notEmpty(),
         body('lastName').optional().notEmpty(),
         body('phone').optional().isMobilePhone('any'),
+        body('address').optional().isString(),
+        body('latitude').optional().isFloat(),
+        body('longitude').optional().isFloat(),
     ]),
     async (req: AuthRequest, res, next) => {
         try {
-            const { firstName, lastName, phone } = req.body;
+            const { firstName, lastName, phone, address, latitude, longitude } = req.body;
 
             const user = await prisma.user.update({
                 where: { id: req.userId },
@@ -58,6 +64,9 @@ router.put(
                     firstName,
                     lastName,
                     phone,
+                    address,
+                    latitude,
+                    longitude,
                 },
                 select: {
                     id: true,
@@ -67,6 +76,9 @@ router.put(
                     lastName: true,
                     profilePhoto: true,
                     role: true,
+                    address: true,
+                    latitude: true,
+                    longitude: true,
                 },
             });
 

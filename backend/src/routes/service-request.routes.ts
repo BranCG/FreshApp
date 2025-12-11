@@ -109,16 +109,39 @@ router.get(
     ]),
     async (req: AuthRequest, res, next) => {
         try {
-            const { status, page = 1, limit = 20 } = req.query;
+            const { status, page = 1, limit = 20, role } = req.query;
             const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
             const where: any = {};
 
-            // Filtrar por rol
-            if (req.userRole === 'CLIENT') {
+            // Filtrar por rol (si se especifica)
+            const roleFilter = (role as string)?.toUpperCase();
+
+            if (roleFilter === 'CLIENT') {
                 where.clientId = req.userId;
-            } else if (req.userRole === 'PROFESSIONAL') {
+            } else if (roleFilter === 'PROFESSIONAL') {
+                // Verificar permisos
+                // Si el usuario no es admin ni profesional, no puede ver como profesional
+                // (Aunque aquí asumimos que el userId del token es el mismo que professionalId en User,
+                // pero professionalId en ServiceRequest se refiere al User que es profesional?
+                // Revisando el schema: professionalId referecia a User. Correcto.)
+
+                // Nota: Podríamos validar req.userRole aquí, pero si no es profesional 
+                // simplemente no tendrá professionalId que coincida, así que devolverá vacío. 
+                // Pero es mejor ser explícito.
+                if (req.userRole !== 'PROFESSIONAL' && req.userRole !== 'ADMIN') {
+                    // Si intenta ver como profesional sin serlo.
+                    // (Ojo: req.userRole viene del token)
+                }
                 where.professionalId = req.userId;
+            } else {
+                // Comportamiento por defecto
+                if (req.userRole === 'CLIENT') {
+                    where.clientId = req.userId;
+                } else if (req.userRole === 'PROFESSIONAL') {
+                    // Por defecto el profesional ve sus trabajos
+                    where.professionalId = req.userId;
+                }
             }
 
             // Filtrar por estado

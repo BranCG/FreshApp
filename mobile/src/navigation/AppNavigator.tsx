@@ -11,6 +11,7 @@ import LoginScreen from '../screens/auth/LoginScreen';
 import { RegisterScreen } from '../screens/auth/RegisterScreen';
 import OTPVerificationScreen from '../screens/auth/OTPVerificationScreen';
 import { HomeScreen } from '../screens/home/HomeScreen';
+import { HistoryScreen } from '../screens/history/HistoryScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { CompleteProfileScreen } from '../screens/professional/CompleteProfileScreen';
 
@@ -47,8 +48,17 @@ const MainTabs = () => {
                 name="Home"
                 component={HomeScreen}
                 options={{
+                    headerShown: false,
                     tabBarLabel: 'Servicios',
                     tabBarIcon: ({ color }) => <TabIcon emoji="🌍" color={color} />,
+                }}
+            />
+            <Tab.Screen
+                name="History"
+                component={HistoryScreen}
+                options={{
+                    tabBarLabel: 'Historial',
+                    tabBarIcon: ({ color }) => <TabIcon emoji="📅" color={color} />,
                 }}
             />
             <Tab.Screen

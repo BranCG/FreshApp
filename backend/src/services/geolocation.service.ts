@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '../index';
 import { AppError } from '../middleware/error-handler.middleware';
 
@@ -25,77 +26,86 @@ export class GeolocationService {
             maxPrice,
         } = query;
 
-        // Query SQL con PostGIS para calcular distancia
-        // Usamos la fórmula Haversine para calcular distancia en metros
-        const professionals = await prisma.$queryRaw<any[]>`
-      SELECT 
-        p.id,
-        p.user_id,
-        p.category,
-        p.bio,
-        p.prices,
-        p.hashtags,
-        p.is_available,
-        p.avg_rating,
-        p.total_reviews,
-        p.total_services,
-        u.first_name,
-        u.last_name,
-        u.profile_photo,
-        p.latitude,
-        p.longitude,
-        (
-          6371000 * acos(
-            cos(radians(${latitude})) * 
-            cos(radians(p.latitude)) * 
-            cos(radians(p.longitude) - radians(${longitude})) + 
-            sin(radians(${latitude})) * 
-            sin(radians(p.latitude))
-          )
-        ) AS distance
-      FROM professionals p
-      INNER JOIN users u ON p.user_id = u.id
-      WHERE 
-        u.is_active = true
-        AND p.is_available = true
-        AND p.latitude IS NOT NULL
-        AND p.longitude IS NOT NULL
-        ${category ? `AND p.category = ${category}` : ''}
-        ${minRating ? `AND p.avg_rating >= ${minRating}` : ''}
-      HAVING distance <= ${radius}
-      ORDER BY distance ASC
-      LIMIT 50
-    `;
+        // EMERGENCY FIX: Fetch ALL professionals with location and filter in JS using Haversine.
+        // This avoids complex SQL/PostGIS errors in Prisma queryRaw completely.
+        const professionals = await prisma.professional.findMany({
+            where: {
+                isAvailable: true,
+                latitude: { not: null },
+                longitude: { not: null },
+                user: { isActive: true }
+            },
+            include: {
+                user: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        profilePhoto: true,
+                    }
+                }
+            }
+        });
 
-        // Filtrar por precio si se especifica
-        let filteredProfessionals = professionals;
-        if (maxPrice) {
-            filteredProfessionals = professionals.filter((prof) => {
-                if (!prof.prices) return false;
-                const prices = typeof prof.prices === 'string'
-                    ? JSON.parse(prof.prices)
-                    : prof.prices;
-                const minProfPrice = Math.min(...Object.values(prices).map(Number));
-                return minProfPrice <= maxPrice;
-            });
-        }
+        // Current location object for distance calc
+        const center = { latitude, longitude };
 
-        return filteredProfessionals.map((prof) => ({
+        // Filter and Map
+        const results = professionals
+            .map(p => {
+                const distance = this.calculateDistance(
+                    center.latitude,
+                    center.longitude,
+                    p.latitude!,
+                    p.longitude!
+                );
+                return { ...p, distance };
+            })
+            .filter(p => {
+                // Radius filter
+                if (p.distance > radius) return false;
+
+                // Category filter
+                if (category && p.category !== category) return false;
+
+                // Rating filter
+                if (minRating && p.avgRating < minRating) return false;
+
+                // Price filter
+                if (maxPrice) {
+                    if (!p.prices) return false;
+                    const prices = typeof p.prices === 'string'
+                        ? JSON.parse(p.prices)
+                        : p.prices;
+                    const values = Object.values(prices as any).map((v: any) =>
+                        typeof v === 'object' ? Number(v.price) : Number(v)
+                    );
+                    const minProfPrice = Math.min(...values);
+                    if (minProfPrice > maxPrice) return false;
+                }
+
+                return true;
+            })
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, 50);
+
+        return results.map((prof) => ({
             id: prof.id,
-            userId: prof.user_id,
+            userId: prof.userId,
             category: prof.category,
             bio: prof.bio,
             prices: typeof prof.prices === 'string' ? JSON.parse(prof.prices) : prof.prices,
             hashtags: prof.hashtags,
-            isAvailable: prof.is_available,
-            avgRating: parseFloat(prof.avg_rating),
-            totalReviews: prof.total_reviews,
-            totalServices: prof.total_services,
-            distance: Math.round(parseFloat(prof.distance)),
+            isAvailable: prof.isAvailable,
+            avgRating: prof.avgRating, // It's Float in Prisma, no parsing needed
+            totalReviews: prof.totalReviews,
+            totalServices: prof.totalServices,
+            distance: Math.round(prof.distance),
+            latitude: prof.latitude,
+            longitude: prof.longitude,
             user: {
-                firstName: prof.first_name,
-                lastName: prof.last_name,
-                profilePhoto: prof.profile_photo,
+                firstName: prof.user.firstName,
+                lastName: prof.user.lastName,
+                profilePhoto: prof.user.profilePhoto,
             },
         }));
     }
