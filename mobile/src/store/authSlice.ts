@@ -117,6 +117,9 @@ const authSlice = createSlice({
                 );
             }
         },
+        setProfileComplete: (state, action: PayloadAction<boolean>) => {
+            state.profileComplete = action.payload;
+        },
         logout: (state) => {
             state.user = null;
             state.professional = null;
@@ -139,6 +142,7 @@ export const {
     updateProfile,
     setProfessional,
     updateProfessionalProfile,
+    setProfileComplete,
     logout,
 } = authSlice.actions;
 

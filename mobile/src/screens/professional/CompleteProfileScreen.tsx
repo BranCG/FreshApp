@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text, ProgressBar, useTheme } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { updateProfile, updateProfessionalProfile } from '../../store/authSlice';
+import { updateProfile, updateProfessionalProfile, setProfileComplete } from '../../store/authSlice';
 import { userAPI, professionalAPI } from '../../services/api';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
@@ -215,7 +215,8 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
             }
 
             // Marcar perfil como completo y actualizar Redux
-            dispatch(updateProfessionalProfile({ ...profRes.data, profileComplete: true }));
+            dispatch(updateProfessionalProfile(profRes.data));
+            dispatch(setProfileComplete(true));
 
             Alert.alert(
                 '¡Perfil Completado!',

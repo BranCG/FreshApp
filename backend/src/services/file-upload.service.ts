@@ -49,6 +49,12 @@ export const uploadToS3 = async (
 ): Promise<string> => {
     const fileName = `${folder}/${Date.now()}-${file.originalname}`;
 
+    // En desarrollo, si no hay credenciales de AWS, retornar una URL mockeada
+    if (process.env.NODE_ENV === 'development' && (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY)) {
+        console.log('⚠️  AWS credentials not configured, using mock URL for development');
+        return `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(file.originalname)}`;
+    }
+
     const params: AWS.S3.PutObjectRequest = {
         Bucket: process.env.AWS_S3_BUCKET || 'freshapp-uploads',
         Key: fileName,
@@ -61,6 +67,11 @@ export const uploadToS3 = async (
         const result = await s3.upload(params).promise();
         return result.Location;
     } catch (error: any) {
+        // En desarrollo, si falla la subida a S3, usar URL mock
+        if (process.env.NODE_ENV === 'development') {
+            console.log('⚠️  S3 upload failed in development, using mock URL');
+            return `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(file.originalname)}`;
+        }
         throw new AppError('Error al subir archivo a S3', 500, error.message);
     }
 };
