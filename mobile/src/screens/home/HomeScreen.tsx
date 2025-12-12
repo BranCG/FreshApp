@@ -225,10 +225,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
             await professionalAPI.updateProfile({ isAvailable: value });
 
-            // If turning on, refresh the map to confirm visibility (optional, but good for confidence)
-            if (value) {
-                fetchNearbyProfessionals();
-            }
+            // Refresh the map regardless of state to update visibility
+            fetchNearbyProfessionals();
         } catch (error) {
             console.error('Error updating availability', error);
             Alert.alert('Error', 'No se pudo actualizar la disponibilidad');
