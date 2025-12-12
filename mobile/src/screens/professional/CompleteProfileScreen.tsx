@@ -72,32 +72,7 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
         },
     });
 
-    const [geocoding, setGeocoding] = useState(false);
 
-    const handleGeocodeAddress = async () => {
-        const address = getValues2('address');
-        if (!address) {
-            Alert.alert('Error', 'Ingresa una dirección primero');
-            return;
-        }
-
-        setGeocoding(true);
-        try {
-            const result = await Location.geocodeAsync(address);
-            if (result.length > 0) {
-                const { latitude, longitude } = result[0];
-                setLocation({ latitude, longitude });
-                Alert.alert('Ubicación encontrada', 'Verifica el pin en el mapa.');
-            } else {
-                Alert.alert('No encontrada', 'Intenta ser más específico (Calle, Número, Comuna).');
-            }
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Falló la búsqueda. Verifica tu conexión.');
-        } finally {
-            setGeocoding(false);
-        }
-    };
 
     // Step 1 Submit
     const onStep1Submit = (data: any) => {
@@ -320,34 +295,32 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
     const renderStep2 = () => (
         <View>
             <Text style={{ marginBottom: 10, color: '#666' }}>
-                Ingresa tu dirección exacta para aparecer en el mapa:
+                Usa el GPS para definir tu ubicación exacta:
             </Text>
-
-            <Input
-                label="Dirección (Calle, Número, Comuna)"
-                name="address"
-                control={control2}
-                error={errors2.address?.message}
-                placeholder="Ej: Av. Providencia 1234, Santiago"
-            />
-
-            <Button
-                mode="text"
-                onPress={handleGeocodeAddress}
-                loading={geocoding}
-                disabled={geocoding}
-                icon="map-search"
-                style={{ marginBottom: 10 }}
-            >
-                Ubicar en Mapa
-            </Button>
 
             <LocationPicker
                 onLocationSelected={(loc) => {
                     setLocation(loc);
+                    if (loc.address) {
+                        setValue2('address', loc.address, { shouldValidate: true });
+                    }
                 }}
                 initialLocation={location || undefined}
             />
+
+            <View style={{ marginTop: 10 }}>
+                <Text style={{ marginBottom: 4, fontWeight: 'bold', color: theme.colors.primary }}>
+                    Dirección Detectada:
+                </Text>
+                <Input
+                    label="Dirección"
+                    name="address"
+                    control={control2}
+                    error={errors2.address?.message}
+                    placeholder="Esperando GPS..."
+                    editable={false}
+                />
+            </View>
 
             <View style={styles.buttonRow}>
                 <Button mode="outlined" onPress={() => setCurrentStep(0)} style={styles.halfButton}>

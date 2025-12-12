@@ -21,7 +21,6 @@ export const EditLocationScreen: React.FC<any> = ({ navigation }) => {
     const dispatch = useDispatch();
     const { professional } = useSelector((state: RootState) => state.auth);
     const [loading, setLoading] = useState(false);
-    const [geocoding, setGeocoding] = useState(false);
 
     // Initial location from professional profile
     const initialLocation = professional?.latitude && professional?.longitude
@@ -30,36 +29,12 @@ export const EditLocationScreen: React.FC<any> = ({ navigation }) => {
 
     const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(initialLocation);
 
-    const { control, handleSubmit, formState: { errors }, getValues, setValue } = useForm({
+    const { control, handleSubmit, formState: { errors }, setValue } = useForm({
         resolver: yupResolver(schema),
         defaultValues: {
             address: professional?.address || '',
         }
     });
-
-    const handleGeocodeAddress = async () => {
-        const address = getValues('address');
-        if (!address) {
-            Alert.alert('Error', 'Ingresa una dirección primero');
-            return;
-        }
-
-        setGeocoding(true);
-        try {
-            const result = await Location.geocodeAsync(address);
-            if (result.length > 0) {
-                const { latitude, longitude } = result[0];
-                setLocation({ latitude, longitude });
-            } else {
-                Alert.alert('No encontrado', 'No pudimos encontrar esa dirección.');
-            }
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Falló la geocodificación.');
-        } finally {
-            setGeocoding(false);
-        }
-    };
 
     const onSubmit = async (data: any) => {
         if (!location) {
@@ -102,40 +77,35 @@ export const EditLocationScreen: React.FC<any> = ({ navigation }) => {
                 <ScrollView contentContainerStyle={styles.content}>
 
                     <Text style={styles.helperText}>
-                        Ingresa la dirección y presiona "Ubicar en Mapa" o mueve el pin manualmente.
+                        Usa el GPS para definir tu nueva ubicación. La dirección se actualizará automáticamente.
                     </Text>
-
-                    <Controller
-                        control={control}
-                        name="address"
-                        render={({ field: { onChange, value } }) => (
-                            <TextInput
-                                label="Dirección"
-                                value={value}
-                                onChangeText={onChange}
-                                mode="outlined"
-                                style={styles.input}
-                                error={!!errors.address}
-                                placeholder="Ej: Av. Providencia 1234"
-                            />
-                        )}
-                    />
-                    <HelperText type="error" visible={!!errors.address}>{errors.address?.message}</HelperText>
-
-                    <PaperButton
-                        mode="text"
-                        onPress={handleGeocodeAddress}
-                        loading={geocoding}
-                        disabled={geocoding}
-                        icon="map-search"
-                        style={{ marginBottom: 15 }}
-                    >
-                        Ubicar en Mapa
-                    </PaperButton>
 
                     <LocationPicker
                         initialLocation={location || undefined}
-                        onLocationSelected={setLocation}
+                        onLocationSelected={(loc: any) => {
+                            setLocation(loc);
+                            if (loc.address) {
+                                setValue('address', loc.address, { shouldValidate: true });
+                            }
+                        }}
+                    />
+
+                    <Text style={{ marginBottom: 4, marginTop: 20, fontWeight: 'bold', color: theme.colors.primary }}>
+                        Dirección Detectada:
+                    </Text>
+                    <Controller
+                        control={control}
+                        name="address"
+                        render={({ field: { value } }) => (
+                            <TextInput
+                                label="Dirección"
+                                value={value}
+                                mode="outlined"
+                                style={styles.input}
+                                editable={false}
+                                placeholder="Esperando GPS..."
+                            />
+                        )}
                     />
 
                     <PaperButton

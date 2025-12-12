@@ -518,18 +518,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const renderHeader = () => (
         <View style={styles.headerContainer}>
             <View style={{ flex: 1 }}>
-                <TouchableOpacity
-                    style={styles.addressBar}
-                    onPress={() => setModalVisible(true)}
-                >
+                <View style={styles.addressBar}>
                     <View style={styles.addressContent}>
                         <Text style={styles.addressLabel}>📍 Tu ubicación:</Text>
                         <Text style={styles.addressText} numberOfLines={1}>
-                            {updatingLocation ? 'Usando GPS...' : (user?.address || 'Toca para definir ubicación')}
+                            {updatingLocation ? 'Usando GPS...' : (user?.address || 'Esperando ubicación...')}
                         </Text>
                     </View>
-                    <Text style={styles.editIcon}>✏️</Text>
-                </TouchableOpacity>
+                </View>
             </View>
         </View>
     );

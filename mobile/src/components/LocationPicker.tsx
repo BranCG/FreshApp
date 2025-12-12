@@ -51,6 +51,21 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             }
 
             let location = await Location.getCurrentPositionAsync({});
+            // Reverse geocode
+            let addressString = '';
+            try {
+                const reverse = await Location.reverseGeocodeAsync({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude
+                });
+                if (reverse.length > 0) {
+                    const addr = reverse[0];
+                    addressString = [addr.street, addr.streetNumber, addr.city].filter(Boolean).join(' ');
+                }
+            } catch (e) {
+                console.log('Reverse geocode error', e);
+            }
+
             const region = {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
@@ -61,6 +76,7 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
             onLocationSelected({
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
+                address: addressString
             });
         } catch (error) {
             setErrorMsg('Error al obtener la ubicación');
@@ -69,14 +85,25 @@ export const LocationPicker: React.FC<LocationPickerProps> = ({
         }
     };
 
-    const handleMapPress = (e: any) => {
+    const handleMapPress = async (e: any) => {
         const { latitude, longitude } = e.nativeEvent.coordinate;
         setLocation({
             ...location!,
             latitude,
             longitude,
         });
-        onLocationSelected({ latitude, longitude });
+
+        // Reverse geocode on tap too
+        let addressString = '';
+        try {
+            const reverse = await Location.reverseGeocodeAsync({ latitude, longitude });
+            if (reverse.length > 0) {
+                const addr = reverse[0];
+                addressString = [addr.street, addr.streetNumber, addr.city].filter(Boolean).join(' ');
+            }
+        } catch (e) { console.log(e); }
+
+        onLocationSelected({ latitude, longitude, address: addressString });
     };
 
     if (loading) {
