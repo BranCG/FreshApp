@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { updateProfile } from '../../store/authSlice';
+import { updateProfile, updateProfessionalProfile } from '../../store/authSlice';
 import { userAPI, professionalAPI } from '../../services/api';
 import {
     View,
@@ -18,6 +18,7 @@ import {
     Modal,
     TextInput,
     KeyboardAvoidingView,
+    Switch,
     TouchableWithoutFeedback,
     Keyboard
 } from 'react-native';
@@ -30,7 +31,8 @@ import { CategoryFilter } from '../../components/CategoryFilter';
 import { ProfessionalCard } from '../../components/ProfessionalCard';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAP_HEIGHT = SCREEN_HEIGHT * 0.5;
+
+// const MAP_HEIGHT = SCREEN_HEIGHT * 0.5; // Removed to allow full screen map
 
 interface HomeScreenProps {
     navigation: any;
@@ -48,6 +50,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const [selectedProfessional, setSelectedProfessional] = useState<any>(null);
     const [updatingLocation, setUpdatingLocation] = useState(false);
 
+    // UI State
+    const [isListExpanded, setIsListExpanded] = useState(false); // Default collapsed
+    const [isServicesExpanded, setIsServicesExpanded] = useState(false); // Default collapsed
+
     // Modal state
     const [modalVisible, setModalVisible] = useState(false);
     const [manualAddress, setManualAddress] = useState('');
@@ -58,12 +64,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         { id: 'MANICURIST', name: 'Manicura', icon: 'hand' },
     ];
 
-    const DEFAULT_REGION: Region = {
-        latitude: -33.4489, // Santiago, Chile
-        longitude: -70.6693,
-        latitudeDelta: 0.05,
-        longitudeDelta: 0.05,
+    const getInitialRegion = (): Region => {
+        if (user?.latitude && user?.longitude) {
+            return {
+                latitude: user.latitude,
+                longitude: user.longitude,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+            };
+        }
+        return {
+            latitude: -33.4489, // Santiago, Chile
+            longitude: -70.6693,
+            latitudeDelta: 0.05,
+            longitudeDelta: 0.05,
+        };
     };
+
+    const [region] = useState<Region>(getInitialRegion());
 
     useEffect(() => {
         const initLocation = async () => {
@@ -89,8 +107,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     mapRef.current.animateToRegion({
                         latitude: user.latitude!,
                         longitude: user.longitude!,
-                        latitudeDelta: 0.05,
-                        longitudeDelta: 0.05,
+                        latitudeDelta: 0.005,
+                        longitudeDelta: 0.005,
                     });
                 }
             } else {
@@ -179,10 +197,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 return {
                     id: p.id,
                     name: `${p.user.firstName} ${p.user.lastName}`,
-                    category: p.category, // BARBER, etc.
-                    rating: p.avgRating,
-                    reviews: p.totalReviews,
-                    price: minPrice,
+                    category: p.category,
                     rating: p.avgRating,
                     reviews: p.totalReviews,
                     price: minPrice,
@@ -200,6 +215,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             setProfessionals([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const toggleAvailability = async (value: boolean) => {
+        try {
+            // Optimistic update
+            dispatch(updateProfessionalProfile({ ...professional!, isAvailable: value }));
+
+            await professionalAPI.updateProfile({ isAvailable: value });
+
+            // If turning on, refresh the map to confirm visibility (optional, but good for confidence)
+            if (value) {
+                fetchNearbyProfessionals();
+            }
+        } catch (error) {
+            console.error('Error updating availability', error);
+            Alert.alert('Error', 'No se pudo actualizar la disponibilidad');
+            // Revert on error
+            dispatch(updateProfessionalProfile({ ...professional!, isAvailable: !value }));
         }
     };
 
@@ -256,16 +290,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             : mockData;
     }; */
 
-    const centerOnUser = () => {
-        if (location && mapRef.current) {
-            mapRef.current.animateToRegion({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-            });
-        }
-    };
+
 
     const handleMarkerPress = (professional: any) => {
         setSelectedProfessional(professional);
@@ -317,8 +342,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             mapRef.current.animateToRegion({
                 latitude,
                 longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
             });
         }
 
@@ -337,6 +362,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
             const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
             const { latitude, longitude } = location.coords;
+
+            // Animate immediately for better UX
+            if (mapRef.current) {
+                mapRef.current.animateToRegion({
+                    latitude,
+                    longitude,
+                    latitudeDelta: 0.005, // Closer zoom
+                    longitudeDelta: 0.005,
+                }, 1000);
+            }
 
             const addressResponse = await Location.reverseGeocodeAsync({ latitude, longitude });
             let addressString = 'Ubicación actual';
@@ -482,18 +517,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
     const renderHeader = () => (
         <View style={styles.headerContainer}>
-            <TouchableOpacity
-                style={styles.addressBar}
-                onPress={() => setModalVisible(true)}
-            >
-                <View style={styles.addressContent}>
-                    <Text style={styles.addressLabel}>📍 Tu ubicación:</Text>
-                    <Text style={styles.addressText} numberOfLines={1}>
-                        {updatingLocation ? 'Usando GPS...' : (user?.address || 'Toca para definir ubicación')}
-                    </Text>
-                </View>
-                <Text style={styles.editIcon}>✏️</Text>
-            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+                <TouchableOpacity
+                    style={styles.addressBar}
+                    onPress={() => setModalVisible(true)}
+                >
+                    <View style={styles.addressContent}>
+                        <Text style={styles.addressLabel}>📍 Tu ubicación:</Text>
+                        <Text style={styles.addressText} numberOfLines={1}>
+                            {updatingLocation ? 'Usando GPS...' : (user?.address || 'Toca para definir ubicación')}
+                        </Text>
+                    </View>
+                    <Text style={styles.editIcon}>✏️</Text>
+                </TouchableOpacity>
+            </View>
         </View>
     );
 
@@ -517,7 +554,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     ref={mapRef}
                     style={styles.map}
                     provider={PROVIDER_GOOGLE}
-                    initialRegion={DEFAULT_REGION}
+                    initialRegion={region}
                     showsUserLocation={false}
                     showsMyLocationButton={false}
                     loadingEnabled
@@ -570,73 +607,112 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     ))}
                 </MapView>
 
-                {/* Center on User Button */}
-                <TouchableOpacity
-                    style={styles.centerButton}
-                    onPress={centerOnUser}
-                    activeOpacity={0.8}
-                >
-                    <Text style={styles.centerButtonText}>📍</Text>
-                </TouchableOpacity>
-
-                {/* Center on Shop Button (Professional Only) */}
-                {user?.role === 'PROFESSIONAL' && professional?.latitude && (
+                {/* Floating Controls (GPS & Availability) */}
+                <View style={styles.floatingControls}>
+                    {/* Switch de Disponibilidad (Solo Profesionales) - Below GPS Button */}
+                    {user?.role === 'PROFESSIONAL' && professional && (
+                        <View style={[styles.floatingSwitchContainer, {
+                            backgroundColor: professional.isAvailable ? '#E8F5E9' : '#FFEBEE',
+                            borderColor: professional.isAvailable ? '#4CAF50' : '#F44336'
+                        }]}>
+                            <Switch
+                                value={professional.isAvailable}
+                                onValueChange={toggleAvailability}
+                                trackColor={{ false: "#ffcdd2", true: "#a5d6a7" }}
+                                thumbColor={professional.isAvailable ? "#4CAF50" : "#F44336"}
+                                style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                            />
+                            <Text style={[styles.floatingSwitchText, { color: professional.isAvailable ? '#1B5E20' : '#B71C1C' }]}>
+                                {professional.isAvailable ? 'DISPONIBLE' : 'OCULTO'}
+                            </Text>
+                        </View>
+                    )}
+                    {/* GPS Button with Sync & Label */}
                     <TouchableOpacity
-                        style={[styles.centerButton, { bottom: 90, backgroundColor: theme.colors.surface }]}
-                        onPress={() => {
-                            mapRef.current?.animateToRegion({
-                                latitude: professional.latitude,
-                                longitude: professional.longitude,
-                                latitudeDelta: 0.005,
-                                longitudeDelta: 0.005,
-                            }, 1000);
-                        }}
+                        style={styles.floatingButtonPill}
+                        onPress={handleUpdateLocation}
                         activeOpacity={0.8}
+                        disabled={updatingLocation}
                     >
-                        <Text style={styles.centerButtonText}>🏪</Text>
+                        <Text style={styles.floatingButtonText}>{updatingLocation ? '⏳' : '📍'}</Text>
+                        <Text style={styles.floatingPillText}>
+                            {updatingLocation ? 'Actualizando...' : 'GPS'}
+                        </Text>
                     </TouchableOpacity>
-                )}
 
-                {/* Category Filter */}
+
+
+
+                </View>
+
+                {/* Category Filter - Expandable "Servicios" Button */}
                 <View style={styles.filterContainer}>
-                    <CategoryFilter
-                        categories={categories}
-                        selectedCategory={selectedCategory}
-                        onSelectCategory={setSelectedCategory}
-                    />
+                    {!isServicesExpanded ? (
+                        <TouchableOpacity
+                            style={styles.servicesButton}
+                            onPress={() => setIsServicesExpanded(true)}
+                            activeOpacity={0.8}
+                        >
+                            <Text style={styles.servicesButtonText}>🛠️ Servicios</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={styles.servicesExpandedContainer}>
+                            <TouchableOpacity
+                                style={styles.closeServicesButton}
+                                onPress={() => setIsServicesExpanded(false)}
+                            >
+                                <Text style={styles.closeServicesText}>X</Text>
+                            </TouchableOpacity>
+                            <CategoryFilter
+                                categories={categories}
+                                selectedCategory={selectedCategory}
+                                onSelectCategory={(cat) => {
+                                    setSelectedCategory(cat);
+                                    setIsServicesExpanded(false);
+                                }}
+                                vertical={true}
+                            />
+                        </View>
+                    )}
                 </View>
             </View>
 
-            {/* Professionals List */}
-            <View style={styles.listContainer}>
-                <View style={styles.listHeader}>
-                    <Text style={styles.listTitle}>Profesionales Cercanos</Text>
-                    <Text style={styles.listCount}>
-                        {professionals.length} {professionals.length === 1 ? 'profesional' : 'profesionales'}
-                    </Text>
-                </View>
+            {/* Professionals List Bottom Sheet */}
+            <View style={[styles.bottomSheetContainer, !isListExpanded && { height: 60 }]}>
+                <TouchableOpacity
+                    style={styles.sheetHeader}
+                    onPress={() => setIsListExpanded(!isListExpanded)}
+                    activeOpacity={0.9}
+                >
+                    <View style={styles.sheetHandle} />
+                    <View style={styles.sheetHeaderContent}>
+                        <Text style={styles.listTitle}>Profesionales Cercanos ({professionals.length})</Text>
+                        <Text style={{ fontSize: 16, color: theme.colors.primary }}>
+                            {isListExpanded ? '👇​' : '👆​​'}
+                        </Text>
+                    </View>
+                </TouchableOpacity>
 
-                <FlatList
-                    data={professionals}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <ProfessionalCard
-                            professional={item}
-                            onPress={() => handleProfessionalPress(item)}
-                        />
-                    )}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.listContent}
-                    ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>😔</Text>
-                            <Text style={styles.emptyTitle}>No hay profesionales cerca</Text>
-                            <Text style={styles.emptySubtitle}>
-                                Intenta cambiar el filtro o ampliar el área de búsqueda
-                            </Text>
-                        </View>
-                    }
-                />
+                {isListExpanded && (
+                    <FlatList
+                        data={professionals}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <ProfessionalCard
+                                professional={item}
+                                onPress={() => handleProfessionalPress(item)}
+                            />
+                        )}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.listContent}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>😔</Text>
+                                <Text style={styles.emptyTitle}>No hay profesionales cerca</Text>
+                            </View>
+                        }
+                    />
+                )}
             </View>
         </View>
     );
@@ -698,7 +774,7 @@ const styles = StyleSheet.create({
         color: theme.colors.textSecondary,
     },
     mapContainer: {
-        height: MAP_HEIGHT,
+        flex: 1,
         position: 'relative',
     },
     map: {
@@ -784,11 +860,49 @@ const styles = StyleSheet.create({
     centerButtonText: {
         fontSize: 24,
     },
+    // Services Button Styles
+    servicesButton: {
+        backgroundColor: 'white',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 25,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        alignSelf: 'center', // Center it nicely
+    },
+    servicesButtonText: {
+        fontWeight: 'bold',
+        fontSize: 14,
+        color: theme.colors.text,
+    },
+    servicesExpandedContainer: {
+        flexDirection: 'column', // Vertical stack
+        alignItems: 'flex-end', // Align items to right
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        paddingVertical: 10,
+        paddingHorizontal: 10,
+        borderRadius: 20,
+    },
+    closeServicesButton: {
+        padding: 10,
+        marginRight: 5,
+        backgroundColor: '#f5f5f5',
+        borderRadius: 20,
+    },
+    closeServicesText: {
+        fontSize: 12,
+    },
     filterContainer: {
         position: 'absolute',
-        top: 80,
-        left: 0,
-        right: 0,
+        top: 130, // Below header
+        right: 20, // Align right
+        alignItems: 'flex-end',
+        zIndex: 20,
     },
     listContainer: {
         flex: 1,
@@ -912,19 +1026,108 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     cancelButton: {
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#fee2e2',
         marginRight: 10,
-    },
-    cancelButtonText: {
-        color: '#4B5563',
-        fontWeight: 'bold',
     },
     confirmButton: {
         backgroundColor: theme.colors.primary,
         marginLeft: 10,
     },
+    cancelButtonText: {
+        color: '#dc2626',
+        fontWeight: 'bold',
+    },
     confirmButtonText: {
         color: 'white',
         fontWeight: 'bold',
+    },
+    // Floating Controls
+    floatingControls: {
+        position: 'absolute',
+        right: 20,
+        bottom: 80,
+        alignItems: 'flex-end',
+        gap: 12,
+        zIndex: 10,
+    },
+    floatingButton: {
+        backgroundColor: 'white',
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...theme.shadows.md,
+    },
+    floatingButtonPill: {
+        backgroundColor: 'white',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 24,
+        ...theme.shadows.md,
+        marginBottom: 8,
+    },
+    floatingButtonText: {
+        fontSize: 20,
+    },
+    floatingPillText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 8,
+        color: theme.colors.text,
+    },
+    floatingSwitchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 24,
+        ...theme.shadows.sm,
+        borderWidth: 1,
+        marginBottom: 8,
+    },
+    floatingSwitchText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        marginLeft: 8,
+        marginRight: 4,
+    },
+
+    // Bottom Sheet Styles
+    bottomSheetContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: 'white',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        ...theme.shadows.lg,
+        elevation: 20,
+        maxHeight: '50%',
+        zIndex: 20,
+    },
+    sheetHeader: {
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+    },
+    sheetHandle: {
+        width: 40,
+        height: 4,
+        backgroundColor: '#E5E7EB',
+        borderRadius: 2,
+        marginBottom: 10,
+    },
+    sheetHeaderContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        alignItems: 'center',
     },
 });

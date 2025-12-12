@@ -12,23 +12,27 @@ interface CategoryFilterProps {
     categories: Category[];
     selectedCategory: string | null;
     onSelectCategory: (id: string | null) => void;
+    vertical?: boolean;
 }
 
 export const CategoryFilter = ({
     categories,
     selectedCategory,
-    onSelectCategory
+    onSelectCategory,
+    vertical = false
 }: CategoryFilterProps) => {
     const { colors } = useTheme();
 
     const allOption = { id: 'ALL', name: 'Todos', icon: 'apps' };
     const items = [allOption, ...categories];
 
+
     return (
         <ScrollView
-            horizontal
+            horizontal={!vertical}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.container}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.container, vertical && { flexDirection: 'column', alignItems: 'flex-end', paddingVertical: 5 }]}
         >
             {items.map((category) => {
                 const isSelected = category.id === 'ALL'
@@ -41,8 +45,18 @@ export const CategoryFilter = ({
                         style={[
                             styles.item,
                             {
-                                backgroundColor: isSelected ? colors.primary : colors.surface,
-                                borderColor: isSelected ? colors.primary : '#E0E0E0',
+                                backgroundColor: isSelected ? colors.primary : '#FFFFFF',
+                                borderColor: isSelected ? colors.primary : '#BDBDBD',
+                                shadowColor: "#000",
+                                shadowOffset: {
+                                    width: 0,
+                                    height: 2,
+                                },
+                                shadowOpacity: 0.25,
+                                shadowRadius: 3.84,
+                                elevation: 5,
+                                marginBottom: vertical ? 8 : 0,
+                                minWidth: vertical ? 120 : 'auto',
                             }
                         ]}
                         onPress={() => onSelectCategory(category.id === 'ALL' ? null : category.id)}
@@ -50,7 +64,7 @@ export const CategoryFilter = ({
                         <Text
                             style={[
                                 styles.text,
-                                { color: isSelected ? '#fff' : '#757575' }
+                                { color: isSelected ? '#fff' : '#424242' }
                             ]}
                         >
                             {category.name}
@@ -60,6 +74,7 @@ export const CategoryFilter = ({
             })}
         </ScrollView>
     );
+
 };
 
 const styles = StyleSheet.create({
