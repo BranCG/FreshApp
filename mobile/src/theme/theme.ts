@@ -75,56 +75,67 @@ export const borderRadius = {
 
 export const typography = {
     h1: {
+        fontFamily: 'Inter_700Bold',
         fontSize: 32,
         fontWeight: 'bold' as const,
         lineHeight: 40,
     },
     h2: {
+        fontFamily: 'Inter_700Bold',
         fontSize: 28,
         fontWeight: 'bold' as const,
         lineHeight: 36,
     },
     h3: {
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 24,
         fontWeight: '600' as const,
         lineHeight: 32,
     },
     h4: {
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 20,
         fontWeight: '600' as const,
         lineHeight: 28,
     },
     h5: {
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 18,
         fontWeight: '600' as const,
         lineHeight: 24,
     },
     h6: {
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 16,
         fontWeight: '600' as const,
         lineHeight: 22,
     },
     body: { // Alias for body1
+        fontFamily: 'Inter_400Regular',
         fontSize: 16,
         fontWeight: 'normal' as const,
         lineHeight: 24,
     },
     body1: {
+        fontFamily: 'Inter_400Regular',
         fontSize: 16,
         fontWeight: 'normal' as const,
         lineHeight: 24,
     },
     body2: {
+        fontFamily: 'Inter_400Regular',
         fontSize: 14,
         fontWeight: 'normal' as const,
         lineHeight: 20,
     },
     caption: {
+        fontFamily: 'Inter_400Regular',
         fontSize: 12,
         fontWeight: 'normal' as const,
         lineHeight: 16,
     },
     button: {
+        fontFamily: 'Inter_600SemiBold',
         fontSize: 14,
         fontWeight: '600' as const,
         lineHeight: 20,
