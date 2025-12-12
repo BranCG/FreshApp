@@ -102,6 +102,7 @@ router.post(
                 address,
                 latitude,
                 longitude,
+                isAvailable = true, // Default to true if provided or default
             } = req.body;
 
             // Verificar si ya tiene perfil profesional
@@ -123,6 +124,7 @@ router.post(
                     address,
                     latitude,
                     longitude,
+                    isAvailable,
                 },
             });
 

@@ -14,6 +14,12 @@ import { HomeScreen } from '../screens/home/HomeScreen';
 import { HistoryScreen } from '../screens/history/HistoryScreen';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { CompleteProfileScreen } from '../screens/professional/CompleteProfileScreen';
+import { ProfessionalProfileScreen } from '../screens/professional/ProfessionalProfileScreen';
+import { EditProfileMenuScreen } from '../screens/professional/EditProfileMenuScreen';
+import { EditBasicInfoScreen } from '../screens/professional/EditBasicInfoScreen';
+import { EditLocationScreen } from '../screens/professional/EditLocationScreen';
+import { EditServicesScreen } from '../screens/professional/EditServicesScreen';
+import { EditPortfolioScreen } from '../screens/professional/EditPortfolioScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -92,6 +98,12 @@ export const AppNavigator = () => {
                         <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
                     </>
                 )}
+                <Stack.Screen name="ProfessionalProfile" component={ProfessionalProfileScreen} />
+                <Stack.Screen name="EditProfileMenu" component={EditProfileMenuScreen} />
+                <Stack.Screen name="EditBasicInfo" component={EditBasicInfoScreen} />
+                <Stack.Screen name="EditLocation" component={EditLocationScreen} />
+                <Stack.Screen name="EditServices" component={EditServicesScreen} />
+                <Stack.Screen name="EditPortfolio" component={EditPortfolioScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

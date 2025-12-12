@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { updateProfile } from '../../store/authSlice';
@@ -21,9 +21,11 @@ import {
     TouchableWithoutFeedback,
     Keyboard
 } from 'react-native';
-import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
+import MapView, { Marker, Region, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
+import ENV from '../../config/environment'; // Import Env
 import { theme } from '../../theme/theme';
+import { useFocusEffect } from '@react-navigation/native';
 import { CategoryFilter } from '../../components/CategoryFilter';
 import { ProfessionalCard } from '../../components/ProfessionalCard';
 
@@ -37,7 +39,7 @@ interface HomeScreenProps {
 export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const dispatch = useDispatch();
     const mapRef = useRef<MapView>(null);
-    const { user } = useSelector((state: RootState) => state.auth);
+    const { user, professional } = useSelector((state: RootState) => state.auth);
 
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState(true);
@@ -102,11 +104,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         }
     }, [user?.latitude, user?.longitude]);
 
-    useEffect(() => {
-        if (location) {
-            fetchNearbyProfessionals();
-        }
-    }, [location, selectedCategory]);
+    useFocusEffect(
+        useCallback(() => {
+            if (location) {
+                fetchNearbyProfessionals();
+            }
+        }, [location, selectedCategory])
+    );
 
     const getLocationPermission = async () => {
         try {
@@ -179,7 +183,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     rating: p.avgRating,
                     reviews: p.totalReviews,
                     price: minPrice,
-                    image: p.user.profilePhoto || 'https://via.placeholder.com/150',
+                    rating: p.avgRating,
+                    reviews: p.totalReviews,
+                    price: minPrice,
+                    image: p.user.profilePhoto ? (p.user.profilePhoto.startsWith('http') ? p.user.profilePhoto : `${ENV.apiUrl.replace('/api', '')}${p.user.profilePhoto}`) : 'https://via.placeholder.com/150',
                     isAvailable: p.isAvailable,
                     latitude: p.latitude,
                     longitude: p.longitude
@@ -540,7 +547,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                                 latitude: professional.latitude,
                                 longitude: professional.longitude,
                             }}
-                            onPress={() => handleMarkerPress(professional)}
                             tracksViewChanges={false}
                         >
                             <View style={styles.markerContainer}>
@@ -551,6 +557,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                                     {!['BARBER', 'TATTOO_ARTIST', 'MANICURIST'].includes(professional.category) && '👤'}
                                 </Text>
                             </View>
+                            <Callout tooltip onPress={() => handleMarkerPress(professional)}>
+                                <View style={styles.calloutBubble}>
+                                    <Text style={styles.calloutTitle}>{professional.name}</Text>
+                                    <Text style={styles.calloutSubtitle}>{professional.category}</Text>
+                                    <View style={styles.calloutBtn}>
+                                        <Text style={styles.calloutBtnText}>Pedir Servicio</Text>
+                                    </View>
+                                </View>
+                            </Callout>
                         </Marker>
                     ))}
                 </MapView>
@@ -563,6 +578,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 >
                     <Text style={styles.centerButtonText}>📍</Text>
                 </TouchableOpacity>
+
+                {/* Center on Shop Button (Professional Only) */}
+                {user?.role === 'PROFESSIONAL' && professional?.latitude && (
+                    <TouchableOpacity
+                        style={[styles.centerButton, { bottom: 90, backgroundColor: theme.colors.surface }]}
+                        onPress={() => {
+                            mapRef.current?.animateToRegion({
+                                latitude: professional.latitude,
+                                longitude: professional.longitude,
+                                latitudeDelta: 0.005,
+                                longitudeDelta: 0.005,
+                            }, 1000);
+                        }}
+                        activeOpacity={0.8}
+                    >
+                        <Text style={styles.centerButtonText}>🏪</Text>
+                    </TouchableOpacity>
+                )}
 
                 {/* Category Filter */}
                 <View style={styles.filterContainer}>
@@ -685,6 +718,42 @@ const styles = StyleSheet.create({
     },
     markerText: {
         fontSize: 20,
+    },
+    calloutBubble: {
+        backgroundColor: 'white',
+        width: 180, // Wider for new text
+        alignItems: 'center',
+        // Shadow for iOS
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        // Elevation for Android
+        elevation: 5,
+        marginBottom: 5, // Give space for arrow if native
+    },
+    calloutTitle: {
+        fontWeight: 'bold',
+        fontSize: 14,
+        marginBottom: 2,
+        color: '#333',
+    },
+    calloutSubtitle: {
+        fontSize: 10,
+        color: '#666',
+        marginBottom: 5,
+    },
+    calloutBtn: {
+        backgroundColor: theme.colors.primary,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 4,
+        marginTop: 2,
+    },
+    calloutBtnText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     userMarkerContainer: {
         backgroundColor: 'white',

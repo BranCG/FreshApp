@@ -1,5 +1,6 @@
 import multer from 'multer';
 import path from 'path';
+import fs from 'fs';
 import AWS from 'aws-sdk';
 import { AppError } from '../middleware/error-handler.middleware';
 
@@ -49,10 +50,27 @@ export const uploadToS3 = async (
 ): Promise<string> => {
     const fileName = `${folder}/${Date.now()}-${file.originalname}`;
 
-    // En desarrollo, si no hay credenciales de AWS, retornar una URL mockeada
+    // En desarrollo, si no hay credenciales de AWS, guardar localmente
     if (process.env.NODE_ENV === 'development' && (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY)) {
-        console.log('⚠️  AWS credentials not configured, using mock URL for development');
-        return `https://via.placeholder.com/400x400.png?text=${encodeURIComponent(file.originalname)}`;
+        console.log('⚠️  AWS credentials not configured, using Local Storage');
+
+        try {
+            const uploadDir = path.join(__dirname, '../../uploads', folder);
+            if (!fs.existsSync(uploadDir)) {
+                fs.mkdirSync(uploadDir, { recursive: true });
+            }
+
+            const safeFileName = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+            const filePath = path.join(uploadDir, safeFileName);
+
+            fs.writeFileSync(filePath, file.buffer);
+
+            // Retornan ruta relativa para que el frontend la complete con su API_URL
+            return `/uploads/${folder}/${safeFileName}`;
+        } catch (err) {
+            console.error('Local upload failed:', err);
+            return `https://via.placeholder.com/400x400.png?text=Error+Upload`;
+        }
     }
 
     const params: AWS.S3.PutObjectRequest = {

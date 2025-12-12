@@ -116,20 +116,21 @@ export class AuthService {
         const accessToken = this.generateAccessToken(user.id, user.role);
         const refreshToken = this.generateRefreshToken(user.id, user.role);
 
-        // Remover datos sensibles
-        const { passwordHash, ...userWithoutPassword } = user;
+        // Remover datos sensibles y separar professional
+        const { passwordHash, professional, ...userWithoutPassword } = user;
 
         // Determinar si el perfil está completo
-        const profileComplete = user.role === 'PROFESSIONAL'
-            ? Boolean(user.professional &&
-                user.professional.bio &&
-                user.professional.address &&
-                user.professional.prices)
+        const profileCompleteCheck = user.role === 'PROFESSIONAL'
+            ? Boolean(professional &&
+                professional.bio &&
+                professional.address &&
+                professional.prices)
             : true;
 
         return {
             user: userWithoutPassword,
-            profileComplete,
+            professional, // Explicitly return professional data
+            profileComplete: profileCompleteCheck,
             accessToken,
             refreshToken,
         };

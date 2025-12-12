@@ -15,6 +15,7 @@ import { RootState } from '../../store';
 import { logout } from '../../store/authSlice';
 import { Button } from '../../components/Button';
 import { theme } from '../../theme/theme';
+import ENV from '../../config/environment';
 
 interface ProfileScreenProps {
     navigation: any;
@@ -88,7 +89,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                     <View style={styles.photoContainer}>
                         {user?.profilePhoto ? (
                             <Image
-                                source={{ uri: user.profilePhoto }}
+                                source={{ uri: user.profilePhoto.startsWith('http') ? user.profilePhoto : `${ENV.apiUrl.replace('/api', '')}${user.profilePhoto}` }}
                                 style={styles.photo}
                             />
                         ) : (
@@ -106,6 +107,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
                     <View style={styles.roleBadge}>
                         <Text style={styles.roleText}>{getRoleLabel(user?.role || '')}</Text>
                     </View>
+
+                    {user?.role === 'PROFESSIONAL' && (
+                        <Button
+                            mode="text"
+                            onPress={() => navigation.navigate('EditProfileMenu')}
+                            style={{ marginTop: 8 }}
+                            icon="pencil"
+                        >
+                            Editar Perfil
+                        </Button>
+                    )}
                 </View>
 
                 {/* Información del usuario */}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Text, ProgressBar, useTheme } from 'react-native-paper';
+import { Text, ProgressBar, useTheme, Chip } from 'react-native-paper';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { updateProfile, updateProfessionalProfile, setProfileComplete } from '../../store/authSlice';
@@ -16,6 +16,7 @@ import { theme } from '../../theme/theme';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import * as Location from 'expo-location';
 
 interface CompleteProfileScreenProps {
     navigation: any;
@@ -53,22 +54,50 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
     const [services, setServices] = useState<any[]>([]);
     const [portfolioPhotos, setPortfolioPhotos] = useState<string[]>([]);
 
-    const { control: control1, handleSubmit: handleSubmit1, formState: { errors: errors1 } } = useForm({
+    const { control: control1, handleSubmit: handleSubmit1, formState: { errors: errors1 }, watch: watch1, setValue: setValue1 } = useForm({
         resolver: yupResolver(step1Schema),
         defaultValues: {
             firstName: user?.firstName || '',
             lastName: user?.lastName || '',
             bio: professional?.bio || '',
-            category: professional?.category || 'BARBER', // Default or selector
+            category: professional?.category || 'BARBER', // Default
         },
     });
+    const selectedCategory = watch1('category');
 
-    const { control: control2, handleSubmit: handleSubmit2, setValue: setValue2, formState: { errors: errors2 } } = useForm({
+    const { control: control2, handleSubmit: handleSubmit2, setValue: setValue2, getValues: getValues2, formState: { errors: errors2 } } = useForm({
         resolver: yupResolver(step2Schema),
         defaultValues: {
             address: professional?.address || '',
         },
     });
+
+    const [geocoding, setGeocoding] = useState(false);
+
+    const handleGeocodeAddress = async () => {
+        const address = getValues2('address');
+        if (!address) {
+            Alert.alert('Error', 'Ingresa una dirección primero');
+            return;
+        }
+
+        setGeocoding(true);
+        try {
+            const result = await Location.geocodeAsync(address);
+            if (result.length > 0) {
+                const { latitude, longitude } = result[0];
+                setLocation({ latitude, longitude });
+                Alert.alert('Ubicación encontrada', 'Verifica el pin en el mapa.');
+            } else {
+                Alert.alert('No encontrada', 'Intenta ser más específico (Calle, Número, Comuna).');
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Falló la búsqueda. Verifica tu conexión.');
+        } finally {
+            setGeocoding(false);
+        }
+    };
 
     // Step 1 Submit
     const onStep1Submit = (data: any) => {
@@ -168,16 +197,9 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
             // 3. Create/Update Professional Profile
             const pricesObj = services.reduce((acc, curr) => ({
                 ...acc,
-                [curr.name]: curr.price // Note: Backend expects simple key-value for prices? 
-                // Wait, backend schema for prices is Json. 
-                // Let's check how it's used. The app might need more structure (duration).
-                // For now, let's just save the price. 
-                // Ideally we should save the full object if backend allows.
-                // Backend `prices` is Json. So we can save whatever.
+                [curr.name]: curr.price
             }), {});
 
-            // Better to save full service objects if possible, but let's stick to the plan.
-            // Let's save a map of Name -> { price, duration }
             const servicesMap = services.reduce((acc, curr) => ({
                 ...acc,
                 [curr.name]: { price: curr.price, duration: curr.duration }
@@ -190,7 +212,8 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
                 address: step2Data.address,
                 latitude: location!.latitude,
                 longitude: location!.longitude,
-                hashtags: [], // Optional
+                hashtags: [],
+                isAvailable: true, // IMPORTANT: Default to available immediately
             };
 
             let profRes;
@@ -202,7 +225,6 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
             dispatch(updateProfessionalProfile(profRes.data));
 
             // 4. Upload Portfolio Photos
-            // This is heavy. Should show progress.
             for (const photoUri of portfolioPhotos) {
                 const formData = new FormData();
                 formData.append('image', {
@@ -210,21 +232,27 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
                     name: 'portfolio.jpg',
                     type: 'image/jpeg',
                 } as any);
-                // Optional: description
                 await professionalAPI.addPortfolioItem(formData);
             }
 
-            // Marcar perfil como completo y actualizar Redux
-            dispatch(updateProfessionalProfile(profRes.data));
             dispatch(setProfileComplete(true));
 
             Alert.alert(
                 '¡Perfil Completado!',
-                'Tu perfil profesional ha sido creado exitosamente.'
+                'Tu perfil profesional ha sido actualizado exitosamente.',
+                [
+                    {
+                        text: 'Ir al Mapa',
+                        onPress: () => {
+                            // Reset stack to Main tabs
+                            navigation.reset({
+                                index: 0,
+                                routes: [{ name: 'Main' }],
+                            });
+                        }
+                    }
+                ]
             );
-
-            // El AppNavigator manejará automáticamente la navegación a Main
-            // basándose en profileComplete = true
 
         } catch (error: any) {
             console.error(error);
@@ -252,14 +280,28 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
                 control={control1}
                 error={errors1.lastName?.message}
             />
-            {/* Category Selector - Simplified as Input for now, should be Dropdown */}
-            <Input
-                label="Categoría (BARBER, TATTOO_ARTIST, MANICURIST)"
-                name="category"
-                control={control1}
-                error={errors1.category?.message}
-                autoCapitalize="characters"
-            />
+            <Text style={{ marginBottom: 8, marginTop: 10, fontWeight: 'bold', color: theme.colors.primary }}>
+                Selecciona tu Profesión
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 15 }}>
+                {[
+                    { label: 'Barbería', value: 'BARBER', icon: 'content-cut' },
+                    { label: 'Tatuajes', value: 'TATTOO_ARTIST', icon: 'draw' },
+                    { label: 'Manicura', value: 'MANICURIST', icon: 'hand-wash' },
+                ].map((cat) => (
+                    <Chip
+                        key={cat.value}
+                        selected={selectedCategory === cat.value}
+                        onPress={() => setValue1('category', cat.value, { shouldValidate: true })}
+                        showSelectedOverlay
+                        mode="outlined"
+                        style={{ borderColor: selectedCategory === cat.value ? theme.colors.primary : '#ccc' }}
+                    >
+                        {cat.label}
+                    </Chip>
+                ))}
+            </View>
+            {errors1.category && <Text style={{ color: theme.colors.error, fontSize: 12, marginBottom: 10 }}>{errors1.category.message}</Text>}
             <Input
                 label="Biografía"
                 name="bio"
@@ -277,20 +319,36 @@ export const CompleteProfileScreen: React.FC<CompleteProfileScreenProps> = ({ na
 
     const renderStep2 = () => (
         <View>
-            <LocationPicker
-                onLocationSelected={(loc) => {
-                    setLocation(loc);
-                    // Optional: Reverse geocode to get address and setValue2('address', ...)
-                }}
-                initialLocation={location || undefined}
-            />
+            <Text style={{ marginBottom: 10, color: '#666' }}>
+                Ingresa tu dirección exacta para aparecer en el mapa:
+            </Text>
+
             <Input
-                label="Dirección"
+                label="Dirección (Calle, Número, Comuna)"
                 name="address"
                 control={control2}
                 error={errors2.address?.message}
-                placeholder="Calle 123, Ciudad"
+                placeholder="Ej: Av. Providencia 1234, Santiago"
             />
+
+            <Button
+                mode="text"
+                onPress={handleGeocodeAddress}
+                loading={geocoding}
+                disabled={geocoding}
+                icon="map-search"
+                style={{ marginBottom: 10 }}
+            >
+                Ubicar en Mapa
+            </Button>
+
+            <LocationPicker
+                onLocationSelected={(loc) => {
+                    setLocation(loc);
+                }}
+                initialLocation={location || undefined}
+            />
+
             <View style={styles.buttonRow}>
                 <Button mode="outlined" onPress={() => setCurrentStep(0)} style={styles.halfButton}>
                     Atrás
