@@ -20,6 +20,10 @@ import { EditBasicInfoScreen } from '../screens/professional/EditBasicInfoScreen
 import { EditLocationScreen } from '../screens/professional/EditLocationScreen';
 import { EditServicesScreen } from '../screens/professional/EditServicesScreen';
 import { EditPortfolioScreen } from '../screens/professional/EditPortfolioScreen';
+import { HelpScreen } from '../screens/help/HelpScreen';
+import { TermsScreen } from '../screens/help/TermsScreen';
+import { PrivacyScreen } from '../screens/help/PrivacyScreen';
+import { FAQScreen } from '../screens/help/FAQScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -75,6 +79,14 @@ const MainTabs = () => {
                     tabBarIcon: ({ color }) => <TabIcon emoji="👤" color={color} />,
                 }}
             />
+            <Tab.Screen
+                name="Help"
+                component={HelpScreen}
+                options={{
+                    tabBarLabel: 'Ayuda',
+                    tabBarIcon: ({ color }) => <TabIcon emoji="❓" color={color} />,
+                }}
+            />
         </Tab.Navigator>
     );
 };
@@ -104,6 +116,9 @@ export const AppNavigator = () => {
                 <Stack.Screen name="EditLocation" component={EditLocationScreen} />
                 <Stack.Screen name="EditServices" component={EditServicesScreen} />
                 <Stack.Screen name="EditPortfolio" component={EditPortfolioScreen} />
+                <Stack.Screen name="Terms" component={TermsScreen} />
+                <Stack.Screen name="Privacy" component={PrivacyScreen} />
+                <Stack.Screen name="FAQ" component={FAQScreen} />
             </Stack.Navigator>
         </NavigationContainer>
     );

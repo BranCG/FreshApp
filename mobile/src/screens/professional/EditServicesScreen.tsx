@@ -19,7 +19,8 @@ export const EditServicesScreen: React.FC<any> = ({ navigation }) => {
 
     useEffect(() => {
         if (professional?.prices) {
-            const parsedServices = Object.entries(professional.prices).map(([name, details]: [string, any]) => ({
+            const parsedServices = Object.entries(professional.prices).map(([name, details]: [string, any], index) => ({
+                id: `${name}-${index}`, // Add unique id for React keys
                 name,
                 price: typeof details === 'object' ? details.price.toString() : details.toString(),
                 duration: typeof details === 'object' ? details.duration?.toString() : '',
